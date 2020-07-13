@@ -8,6 +8,8 @@ namespace ServerCore
     public class Listener
     {
         private Socket m_listensocket;
+        private Action<Socket> m_onAcceptHandler;
+
 
         public Listener()
         {
@@ -17,12 +19,13 @@ namespace ServerCore
             m_listensocket.Bind(endPoint);
         }
 
-        public void Start()
+        public void Start(Action<Socket> onAcceptHandler)
         {
             m_listensocket.Listen(100);
 
+            m_onAcceptHandler += onAcceptHandler;
             // 동기 처리
-          //  m_socket.Accept();
+            //  m_socket.Accept();
 
             // 비동기 처리
             SocketAsyncEventArgs saeAcceptArgs = new SocketAsyncEventArgs();
@@ -47,9 +50,8 @@ namespace ServerCore
             // 소켓 에러 체크
             if (args.SocketError == SocketError.Success)
             {
-                int bytes = args.AcceptSocket.Send(Encoding.UTF8.GetBytes("Welcome JWH Client"));
                 // TODO 컨텐츠로 요청
-                Console.WriteLine($"Send data {bytes}");
+                m_onAcceptHandler.Invoke(args.AcceptSocket);
             }
             else
             {
